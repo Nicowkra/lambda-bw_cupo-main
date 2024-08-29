@@ -1,0 +1,10 @@
+node_modules/
+node_modules-build/
+build/
+.build/
+.env
+.env.production
+lambda-layers-*
+.serverless
+.DS_Store
+report.csv

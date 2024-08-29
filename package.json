@@ -1,0 +1,39 @@
+{
+  "name": "bw_cupo",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "start": "tsc && serverless offline start",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "not_defined_yet"
+  },
+  "author": "Bruno Z Lippi",
+  "license": "ISC",
+  "exports": {
+    "@libs": "./libs"
+  },
+  "dependencies": {
+    "@prisma/client": "^4.16.2",
+    "bw_cupo": "file:",
+    "jsonwebtoken": "^9.0.0",
+    "moment": "^2.29.4",
+    "prisma": "^4.16.2",
+    "swagger-jsdoc": "^6.2.8",
+    "swagger-ui-express": "^5.0.1"
+  },
+  "devDependencies": {
+    "@types/aws-lambda": "^8.10.119",
+    "@types/jsonwebtoken": "^9.0.2",
+    "@types/node": "^20.3.3",
+    "serverless-dotenv-plugin": "^6.0.0",
+    "serverless-offline": "^12.0.4",
+    "serverless-plugin-typescript": "^2.1.5",
+    "serverless-tscpaths": "^0.0.8",
+    "ts-node": "^10.9.1",
+    "typescript": "^5.1.6"
+  }
+}

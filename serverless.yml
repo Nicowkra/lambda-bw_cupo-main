@@ -1,0 +1,142 @@
+service: bw-cupo
+plugins:
+  - serverless-dotenv-plugin
+  - serverless-plugin-typescript
+  - serverless-tscpaths
+  - serverless-offline
+useDotenv: true
+
+provider:
+  name: aws
+  runtime: nodejs18.x
+  stage: prod
+  tags:
+    project: bw_cupo
+  stackTags:
+    project: bw_cupo
+  # vpc:
+  #   securityGroupIds:
+  #     -  sg-02a5da7c7e0b2a99c
+  #   subnetIds:
+  #     -  subnet-0b162b5d84e55ca8a
+  #     -  subnet-051ce26c4382e8a7f
+  #     -  subnet-0701c4e0302a0987f
+  #     -  subnet-063d419218be73643
+  #     -  subnet-02d2dc2a75d6a7152
+  #     -  subnet-0d1726418aa2a0a67
+
+layers:
+  TopicPrismaAwsNodeModules:
+    path: lambda-layers-node_modules
+  TopicPrismaAwsLibs:
+    path: lambda-layers-libs
+  TopicPrismaAwsPrismaClient:
+    path: lambda-layers-prisma-client
+
+functions:
+  benefit:
+    handler: ./build/lambda/benefit_handler.benefitHandler
+    events:
+      - httpApi:
+          method: POST
+          path: /benefit
+      - httpApi:
+          method: GET
+          path: /benefit/{id}
+      - httpApi:
+          method: DELETE
+          path: /benefit/{id}
+    environment: ${file(env.json)}
+    layers:
+      - { Ref: TopicPrismaAwsNodeModulesLambdaLayer }
+      - { Ref: TopicPrismaAwsLibsLambdaLayer }
+      - { Ref: TopicPrismaAwsPrismaClientLambdaLayer }
+  benefit-request:
+    handler: ./build/lambda/benefit-request_handler.benefitRequestHandler
+    events:
+      - httpApi:
+          method: POST
+          path: /benefit/{benefitId}/request
+      - httpApi:
+          method: GET
+          path: /benefit/{originId}/request/{id}
+      - httpApi:
+          method: POST
+          path: /benefit/{benefitId}/request/{id}/status
+    environment: ${file(env.json)}
+    layers:
+      - { Ref: TopicPrismaAwsNodeModulesLambdaLayer }
+      - { Ref: TopicPrismaAwsLibsLambdaLayer }
+      - { Ref: TopicPrismaAwsPrismaClientLambdaLayer }
+  benefit-assignment:
+    handler: ./build/lambda/benefit-assignment_handler.benefitAssignmentHandler
+    events:
+      - httpApi:
+          method: POST
+          path: /benefit/{benefitId}/assignment
+      - httpApi:
+          method: GET
+          path: /benefit/{benefitId}/assignment/{id}
+    environment: ${file(env.json)}
+    layers:
+      - { Ref: TopicPrismaAwsNodeModulesLambdaLayer }
+      - { Ref: TopicPrismaAwsLibsLambdaLayer }
+      - { Ref: TopicPrismaAwsPrismaClientLambdaLayer }
+  benefit-group:
+    handler: ./build/lambda/benefit-group_handler.benefitGroupHandler
+    events:
+      - httpApi:
+          method: POST
+          path: /benefit/{benefitId}/group
+      - httpApi:
+          method: GET
+          path: /benefit/{benefitId}/group/{id}
+      - httpApi:
+          method: DELETE
+          path: /benefit/{benefitId}/group/{id}
+    environment: ${file(env.json)}
+    layers:
+      - { Ref: TopicPrismaAwsNodeModulesLambdaLayer }
+      - { Ref: TopicPrismaAwsLibsLambdaLayer }
+      - { Ref: TopicPrismaAwsPrismaClientLambdaLayer }
+  user:
+    handler: ./build/lambda/user_handler.userHandler
+    timeout: 10
+    events:
+      - httpApi:
+          method: PUT
+          path: /user
+      - httpApi:
+          method: GET
+          path: /user/{id}
+      - httpApi:
+          method: GET
+          path: /user/{id}/groups
+      - httpApi:
+          method: GET
+          path: /user/{id}/assigned
+      - httpApi:
+          method: GET
+          path: /user/{id}/requested
+      - httpApi:
+          method: GET
+          path: /user/{id}/requests/pending
+    environment: ${file(env.json)}
+    layers:
+      - { Ref: TopicPrismaAwsNodeModulesLambdaLayer }
+      - { Ref: TopicPrismaAwsLibsLambdaLayer }
+      - { Ref: TopicPrismaAwsPrismaClientLambdaLayer }
+  report:
+    handler: ./build/lambda/report_handler.reportHandler
+    events:
+      - httpApi:
+          method: GET
+          path: /report/user/{userId}/requests
+      - httpApi:
+          method: GET
+          path: /report/user/{userId}/pending
+    environment: ${file(env.json)}
+    layers:
+      - { Ref: TopicPrismaAwsNodeModulesLambdaLayer }
+      - { Ref: TopicPrismaAwsLibsLambdaLayer }
+      - { Ref: TopicPrismaAwsPrismaClientLambdaLayer }

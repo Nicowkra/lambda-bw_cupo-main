@@ -1,0 +1,91 @@
+datasource db {
+    provider = "postgres"
+    url      = env("DATABASE_URL")
+}
+
+generator client {
+    provider      = "prisma-client-js"
+    binaryTargets = [env("PRISMA_BINARY_TARGET")]
+}
+
+model Benefit {
+    id           String              @id @unique
+    createdAt    DateTime            @default(now())
+    updatedAt    DateTime?           @updatedAt
+    deletedAt    DateTime?
+    name         String
+    description  String
+    image        String?
+    duration     String
+    durationUnit String
+    assignments  BenefitAssignment[]
+    groups       BenefitGroup[]
+}
+
+model BenefitAssignment {
+    id           String           @id @default(cuid())
+    createdAt    DateTime         @default(now())
+    benefit      Benefit          @relation(fields: [benefitId], references: [id])
+    benefitId    String
+    assignedBy   User             @relation("assigned", fields: [assignedById], references: [id])
+    assignedById String
+    receiver     User             @relation("receiverBenefit", fields: [receiverId], references: [id])
+    receiverId   String
+    limit        Int
+    validUntil   DateTime
+    authorizers  User[]           @relation("authorizerBenefit")
+    requests     BenefitRequest[]
+}
+
+model BenefitGroup {
+    id          String           @id @default(cuid())
+    createdAt   DateTime         @default(now())
+    deletedAt   DateTime?
+    benefit     Benefit          @relation(fields: [benefitId], references: [id])
+    benefitId   String
+    limit       Int
+    conditions  Json
+    requests    BenefitRequest[]
+    authorizers Json[]
+}
+
+model BenefitRequest {
+    id                  String               @id @default(cuid())
+    createdAt           DateTime             @default(now())
+    benefitAssignment   BenefitAssignment?   @relation(fields: [benefitAssignmentId], references: [id])
+    benefitAssignmentId String?
+    benefitGroup        BenefitGroup?        @relation(fields: [benefitGroupId], references: [id])
+    benefitGroupId      String?
+    authorizers         Json[]
+    authorizedBy        User?                @relation("authorized", fields: [authorizedById], references: [id])
+    authorizedById      String?
+    receiver            User                 @relation("request", fields: [receiverId], references: [id])
+    receiverId          String
+    status              BenefitRequestStatus @default(PENDING)
+    approved            Boolean              @default(false)
+}
+
+enum BenefitRequestStatus {
+    PENDING
+    APPROVED
+    DECLINED
+    DELIVERED
+    CANCELLED
+}
+
+model User {
+    id                 String              @id @unique
+    createdAt          DateTime            @default(now())
+    updatedAt          DateTime?           @updatedAt
+    name               String
+    role               String?
+    attributes         Json
+    manager            User?               @relation("manager", fields: [managerId], references: [id])
+    managerId          String?
+    supervises         User[]              @relation("manager")
+    assignedBenefits   BenefitAssignment[] @relation("assigned")
+    authorizerBenefits BenefitAssignment[] @relation("authorizerBenefit")
+    receivedBenefits   BenefitAssignment[] @relation("receiverBenefit")
+    requestedBenefits  BenefitRequest[]    @relation("request")
+    authorizedBenefits BenefitRequest[]    @relation("authorized")
+}

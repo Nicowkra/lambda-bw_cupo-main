@@ -1,0 +1,163 @@
+{
+    "Version": "2012-10-17",
+    "Statement": [
+        {
+            "Effect": "Allow",
+            "Action": [
+                "iam:PassRole",
+                "iam:Get*",
+                "iam:CreateRole",
+                "iam:DeleteRole",
+                "iam:AttachRolePolicy",
+                "iam:DetachRolePolicy",
+                "iam:DeleteRolePolicy",
+                "iam:PutRolePolicy",
+                "iam:TagRole",
+                "iam:UntagRole",
+                "iam:CreateServiceLinkedRole",
+                "iam:DeleteServiceLinkedRole",
+                "iam:DeleteRolePolicy"
+            ],
+            "Resource": [
+                "arn:aws:iam::*:role/bw-reco-prod*",
+                "arn:aws:iam::*:role/laanonima*",
+                "arn:aws:iam::*:role/bw-cupo*"
+            ]
+        },
+        {
+            "Effect": "Allow",
+            "Action": [
+                "cloudformation:Describe*",
+                "cloudformation:List*",
+                "cloudformation:Get*",
+                "cloudformation:PreviewStackUpdate",
+                "cloudformation:CreateStack",
+                "cloudformation:UpdateStack",
+                "cloudformation:CreateChangeSet",
+                "cloudformation:ExecuteChangeSet",
+                "cloudformation:DeleteChangeSet",
+                "cloudformation:ValidateTemplate",
+                "cloudformation:TagResource",
+                "cloudformation:UntagResource"
+            ],
+            "Resource": [
+                "arn:aws:cloudformation:us-east-1:*:stack/bw-cupo*",
+                "arn:aws:cloudformation:us-east-1:*:stack/laanonima*",
+                "arn:aws:cloudformation:us-east-1:*:stack/bw-reco*"
+            ]
+        },
+        {
+            "Effect": "Allow",
+            "Action": [
+                "cloudformation:ValidateTemplate"
+            ],
+            "Resource": [
+                "arn:aws:cloudformation:us-east-1:*:stack/bw-cupo*",
+                "arn:aws:cloudformation:us-east-1:*:stack/laanonima*",
+                "arn:aws:cloudformation:us-east-1:*:stack/bw-reco*"
+            ]
+        },
+        {
+            "Effect": "Allow",
+            "Action": [
+                "s3:*"
+            ],
+            "Resource": [
+                "arn:aws:s3:::bw-cupo*",
+                "arn:aws:s3:::bw-reco*",
+                "arn:aws:s3:::laanonima*"
+            ]
+        },
+        {
+            "Effect": "Allow",
+            "Action": [
+                "s3:ListAllMyBuckets",
+                "s3:CreateBucket"
+            ],
+            "Resource": "*"
+        },
+        {
+            "Effect": "Allow",
+            "Action": [
+                "apigateway:*"
+            ],
+            "Resource": [
+                "arn:aws:apigateway:*::/*"
+            ]
+        },
+        {
+            "Effect": "Allow",
+            "Action": [
+                "logs:DescribeLogGroups"
+            ],
+            "Resource": "arn:aws:logs:us-east-1:*:log-group::log-stream:*"
+        },
+        {
+            "Effect": "Allow",
+            "Action": [
+                "ec2:DescribeSecurityGroups",
+                "ec2:ModifySecurityGroupRules"
+            ],
+            "Resource": [
+                "arn:aws:ec2:*:*:security-group/sg-02a5da7c7e0b2a99c"
+            ]
+        },
+        {
+            "Action": [
+                "logs:CreateLogGroup",
+                "logs:CreateLogStream",
+                "logs:DeleteLogGroup",
+                "logs:DeleteLogStream",
+                "logs:DescribeLogStreams",
+                "logs:FilterLogEvents",
+                "logs:TagResource",
+                "logs:TagLogGroup",
+                "logs:UntagResource",
+                "logs:UntagLogGroup"
+            ],
+            "Resource": "arn:aws:logs:us-east-1:*:log-group:/aws/lambda/*:*",
+            "Effect": "Allow"
+        },
+        {
+            "Effect": "Allow",
+            "Action": [
+                "events:DescribeRule",
+                "events:PutRule",
+                "events:PutTargets",
+                "events:RemoveTargets",
+                "events:DeleteRule"
+            ],
+            "Resource": "arn:aws:events:us-east-1:*:rule/*"
+        },
+        {
+            "Effect": "Allow",
+            "Action": [
+                "lambda:Get*",
+                "lambda:List*",
+                "lambda:CreateFunction",
+                "lambda:DeleteFunction",
+                "lambda:UpdateFunctionConfiguration",
+                "lambda:UpdateFunctionCode",
+                "lambda:ListVersionsByFunction",
+                "lambda:PublishVersion",
+                "lambda:PublishLayerVersion",
+                "lambda:DeleteLayerVersion",
+                "lambda:CreateAlias",
+                "lambda:DeleteAlias",
+                "lambda:UpdateAlias",
+                "lambda:AddPermission",
+                "lambda:RemovePermission",
+                "lambda:InvokeFunction",
+                "lambda:TagResource",
+                "lambda:UntagResource",
+                "lambda:CreateFunctionUrlConfig",
+                "lambda:DeleteFunctionUrlConfig",
+                "lambda:UpdateFunctionUrlConfig"
+            ],
+            "Resource": [
+                "arn:aws:lambda:*:*:function:*",
+                "arn:aws:lambda:*:*:layer:*"
+            ]
+        }
+    ]
+}

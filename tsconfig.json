@@ -1,0 +1,23 @@
+{
+  "compilerOptions": {
+    "lib": ["es2016", "esnext.asynciterable"],
+    "baseUrl": "./src/",
+    "outDir": "./build",
+    "rootDirs": ["./build", "./src"],
+    "paths": {
+      "@libs/*": ["libs/*"]
+    },
+    "target": "ESNext",
+    "module": "Node16",
+    "allowJs": true,
+    "moduleResolution": "Node16",
+    "sourceMap": true,
+    "strict": true,
+    "esModuleInterop": true,
+    "forceConsistentCasingInFileNames": true,
+    "noUnusedLocals": true,
+    "noImplicitAny": true
+  },
+  "include": ["./src/**/*", "swagger.js"],
+  "exclude": ["node_modules"]
+}

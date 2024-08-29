@@ -1,0 +1,200 @@
+name: Deploy lambdas
+on:
+  push:
+    branches:
+      - "main"
+
+permissions:
+  actions: write
+  contents: read
+
+jobs:
+  remove-old-artifacts:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+    - name: Remove old artifacts
+      uses: c-hive/gha-remove-artifacts@v1
+      with:
+        age: '90 seconds'
+  build-node_modules-lambda-layer:
+    name: Bld. node_modules layer
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v3
+
+      - name: Set up Node.js 18.x
+        uses: actions/setup-node@v1
+        with:
+          node-version: 18.x
+
+      # Only install PROD packages i.e. no `@types/*` packages or dev-related packages
+      - name: Install PROD packages
+        run: yarn --production
+
+      - name: Prepare lambda layer
+        run: ./scripts/ci/prepare-node-modules-lambda-layer.sh
+
+      - uses: actions/upload-artifact@v3
+        with:
+          name: lambda-layers-node_modules
+          path: ./lambda-layers-node_modules
+
+  build-prisma-client-lambda-layer:
+    name: Bld. @prisma/client layer
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v3
+
+      - name: Set up Node.js 18.x
+        uses: actions/setup-node@v1
+        with:
+          node-version: 18.x
+
+      - name: Install ALL packages
+        run: yarn --frozen-lockfile
+
+      # Generate Prisma Client and binary that can run in a lambda environment
+      - name: Prepare prisma client
+        run: yarn prisma generate
+        env:
+          PRISMA_BINARY_TARGET: "\"rhel-openssl-1.0.x\""
+
+      - name: Prepare "@prisma/client" lambda layer
+        run: ./scripts/ci/prepare-prisma-client-lambda-layer.sh
+
+      - uses: actions/upload-artifact@v3
+        with:
+          name: lambda-layers-prisma-client
+          path: ./lambda-layers-prisma-client
+
+  build-libs-lambda-layers:
+    name: Bld. @libs layer
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v3
+
+      - name: Set up Node.js 18.x
+        uses: actions/setup-node@v1
+        with:
+          node-version: 18.x
+
+      - name: Install ALL packages
+        run: yarn --frozen-lockfile
+
+      - name: Prepare prisma client
+        run: yarn prisma generate
+        env:
+          PRISMA_BINARY_TARGET: "\"rhel-openssl-1.0.x\""
+
+      - name: Build assets
+        run: yarn tsc
+
+      - name: Prepare "@libs/*"" lambda layer
+        run: ./scripts/ci/prepare-libs-lambda-layer.sh
+
+      - uses: actions/upload-artifact@v3
+        with:
+          name: lambda-layers-libs
+          path: ./lambda-layers-libs
+
+  build-lambdas:
+    name: Build lambdas
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v3
+
+      - name: Set up Node.js 18.x
+        uses: actions/setup-node@v1
+        with:
+          node-version: 18.x
+
+      - name: Install ALL packages
+        run: yarn --frozen-lockfile
+
+      - name: Prepare prisma client
+        run: yarn prisma generate
+        env:
+          PRISMA_BINARY_TARGET: "\"rhel-openssl-1.0.x\""
+
+      - name: Build lambdas
+        run: yarn tsc
+
+      - uses: actions/upload-artifact@v3
+        with:
+          name: build-lambdas
+          path: ./build/lambda
+
+  deploy-lambdas:
+    name: Deploy lambdas
+    needs:
+      [
+        build-node_modules-lambda-layer,
+        build-prisma-client-lambda-layer,
+        build-libs-lambda-layers,
+        build-lambdas,
+      ]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v3
+
+      - name: Set up Node.js 18.x
+        uses: actions/setup-node@v1
+        with:
+          node-version: 18.x
+
+      - uses: actions/download-artifact@v3
+        with:
+          name: build-lambdas
+          path: ./build/lambda
+
+      - uses: actions/download-artifact@v3
+        with:
+          name: lambda-layers-node_modules
+          path: ./build/lambda/lambda-layers-node_modules
+
+      - uses: actions/download-artifact@v3
+        with:
+          name: lambda-layers-libs
+          path: ./build/lambda/lambda-layers-libs
+
+      - uses: actions/download-artifact@v3
+        with:
+          name: lambda-layers-prisma-client
+          path: ./build/lambda/lambda-layers-prisma-client
+
+      - name: Unzip layers
+        run: |
+          tar -C ./build/lambda/lambda-layers-node_modules -xf ./build/lambda/lambda-layers-node_modules/nodejs.tar.gz
+          rm -rf ./build/lambda/lambda-layers-node_modules/nodejs.tar.gz
+          tar -C ./build/lambda/lambda-layers-libs -xf ./build/lambda/lambda-layers-libs/nodejs.tar.gz
+          rm -rf ./build/lambda/lambda-layers-libs/nodejs.tar.gz
+          tar -C ./build/lambda/lambda-layers-prisma-client -xf ./build/lambda/lambda-layers-prisma-client/nodejs.tar.gz
+          rm -rf ./build/lambda/lambda-layers-prisma-client/nodejs.tar.gz
+
+      - name: Move serverless.yml
+        run: mv serverless.yml ./build/lambda/serverless.yml
+
+      - name: Move env.json
+        run: mv env.json ./build/lambda/env.json
+
+      - name: Deploy lambdas and layers
+        uses: serverless/github-action@v3.2
+        with:
+          args: -c "cd /github/workspace/build/lambda && serverless plugin install -n serverless-dotenv-plugin && serverless deploy --verbose"
+          entrypoint: /bin/sh
+        env:
+          SERVICE_ROOT: ./build/lambda
+          SERVERLESS_ACCESS_KEY: ${{ secrets.SERVERLESS_ACCESS_KEY }}
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID_CI }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY_CI }}
+          AWS_REGION: ${{ secrets.AWS_REGION }}
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          API_KEY: ${{ secrets.API_KEY }}
+          PRISMA_BINARY_TARGET: "\"rhel-openssl-1.0.x\""
